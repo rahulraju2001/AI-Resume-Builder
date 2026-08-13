@@ -9,6 +9,7 @@ import Pnf from './pages/Pnf'
 import Download from './pages/Download'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import { ToastContainer } from 'react-toastify'
 
 function App() {
 
@@ -25,7 +26,8 @@ function App() {
         <Route path='/*' element={<Pnf/>} />
       </Routes>
       <Footer/>
-    </>
+      <ToastContainer position='top-right' theme='colored' autoClose={4000}/>
+      </>
   )
 }
 
