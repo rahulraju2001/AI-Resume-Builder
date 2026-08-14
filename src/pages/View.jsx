@@ -36,7 +36,7 @@ function View() {
               <FaFileDownload />
             </button>
             {/* edit */}
-            <Edit />
+            <Edit resumeDetails={resume} setResumeDetails={setResume}/>
             {/* all resumes */}
             <Link to={"/all-resumes"} className="btn mx-2">
               <MdTextSnippet className="fs-3" />
