@@ -9,10 +9,10 @@ import { AiFillBackward } from "react-icons/ai";
 import { viewResumeAPI } from "../services/apiService";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import { downloadResumeAPI } from "../services/apiService";
 
 function View() {
-
-  const previewRef = useRef()
+  const previewRef = useRef();
   const [resume, setResume] = useState({});
   const { id } = useParams();
   console.log(resume);
@@ -24,18 +24,40 @@ function View() {
     }
   };
 
-  const downloadCV = async ()=>{
-    const previewTag = previewRef.current
-    const canvas = await html2canvas(previewTag)
-    const pdf = new jsPDF()
-    const imageWidth = pdf.internal.pageSize.getWidth()
-    const imageHeight = pdf.internal.pageSize.getHeight()
-    pdf.addImage(canvas,"PNG",0,0,imageWidth,imageHeight)
-    //generate image url from canvas
-    URL.createObjectURL(canvas)
-    //when download cv api becomes success
-    pdf.save("resume.pdf")
-  }
+  const downloadCV = async () => {
+    const previewTag = previewRef.current;
+    const canvas = await html2canvas(previewTag);
+    canvas.toBlob(async (imgFile) => {
+      //create formData to send file via API
+      const formData = new FormData();
+      formData.append("file", imgFile);
+      formData.append("upload_preset", "resumes");
+      //generate resumeImg from cloudinary - Api call
+      const result = await fetch("https://api.cloudinary.com/v1_1/mchlizpc/auto/upload",{
+        method:"POST",
+        body:formData
+      })
+      const serverData = await result.json()
+      const url = serverData.secure_url
+      //console.log(url);
+      generatePDF(url)
+    });
+  };
+
+  const generatePDF = async (resumeImg) => {
+    const pdf = new jsPDF();
+    const imageWidth = pdf.internal.pageSize.getWidth();
+    const imageHeight = pdf.internal.pageSize.getHeight();
+    pdf.addImage(resumeImg, "PNG", 0, 0, imageWidth, imageHeight);
+    //api call to save download resume details in json
+    const today = new Date()
+    const timestamp = `${today.toLocaleDateString()}, ${today.toLocaleTimeString()}`
+    const result = await downloadResumeAPI({timestamp,resumeImg,resumeId:resume.id,jobRole:resume.job})
+    if(result.status==201){
+    //to download cv as pdf when api call becomes success
+    pdf.save(`${resume.fullName}-CV.pdf`);
+    }
+  };
 
   useEffect(() => {
     getResumeDetails();
@@ -53,7 +75,7 @@ function View() {
               <FaFileDownload />
             </button>
             {/* edit */}
-            <Edit resumeDetails={resume} setResumeDetails={setResume}/>
+            <Edit resumeDetails={resume} setResumeDetails={setResume} />
             {/* all resumes */}
             <Link to={"/all-resumes"} className="btn mx-2">
               <MdTextSnippet className="fs-3" />
@@ -72,7 +94,7 @@ function View() {
           </div>
           {/* preview component */}
           <div ref={previewRef} className="p-5">
-            <Preview ResumeDetails={resume}/>
+            <Preview ResumeDetails={resume} />
           </div>
         </div>
         <div className="col-lg-2"></div>
